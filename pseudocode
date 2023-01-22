@@ -1,0 +1,13 @@
+initialization:
+    Iitialize wights and biases so that weights[l] stores the weight matrix for a given layer and biases[l] stores the bias vector for a given layer
+
+forward propagation:
+    For each layer, calculate the weighted sum and activation of all neurons and store it
+
+gradient descent:
+    For a certain number of iterations (training epochs):
+        Calculate the cost
+        Calculate the gradient using the cost
+        Update the weights and biases using the gradient
+
+backpropagation:
