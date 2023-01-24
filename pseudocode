@@ -11,3 +11,7 @@ gradient descent:
         Update the weights and biases using the gradient
 
 backpropagation:
+    Calculate the partial derivatives of the cost function with respect to the neuron activations of the last layer.
+    Propagate the error through the network and calculate the partial derivatives of the cost function with respect to the neuron activations of all layers, starting from the last.
+    With these results, calculate the partial derivatives of the cost function with respect to all weights and biases of the network - the gradient of the cost function with respect to weights and biases.
+    Return the gradient.
