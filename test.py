@@ -40,6 +40,9 @@ print(c)
 # dc = sp.Derivative((sp.Vector(([x1, y1, z1]) - np.array([a1, b1, c1]))**2)/5, x1)
 # print(f"{dc}")
 # print(f"{dc.doit()}")
-
-for l in range(15-1, 0-1, -1):
-    print(l)
+print()
+for i in range(len(h)):
+    e = y[i]-h[i]
+    print(np.dot(e, e))
+c = sum([np.dot(y[i]-h[i], y[i]-h[i]) for x in range(len(h))])/len(h)
+print(c)
