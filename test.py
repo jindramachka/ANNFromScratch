@@ -40,9 +40,26 @@ print(c)
 # dc = sp.Derivative((sp.Vector(([x1, y1, z1]) - np.array([a1, b1, c1]))**2)/5, x1)
 # print(f"{dc}")
 # print(f"{dc.doit()}")
+
+# 2 implemented
 print()
 for i in range(len(h)):
     e = y[i]-h[i]
     print(np.dot(e, e))
-c = sum([np.dot(y[i]-h[i], y[i]-h[i]) for x in range(len(h))])/len(h)
+c = sum([np.dot(y[i]-h[i], y[i]-h[i]) for i in range(len(h))])/len(h)
 print(c)
+
+# Partial ifferentiation implemented
+print()
+h_for_diff = h.T
+print(h_for_diff)
+y_for_diff = y.T
+print(y_for_diff)
+nabla_h = []
+for i in range(len(h_for_diff)):
+    hi = h_for_diff[i]
+    yi = y_for_diff[i]
+    pdC_pdhi = 2/len(hi) * np.dot((hi-yi), hi)
+    nabla_h.append(pdC_pdhi)
+print(nabla_h)
+

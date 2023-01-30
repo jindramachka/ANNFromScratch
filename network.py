@@ -27,6 +27,7 @@ class Network:
         print()
         print(self.biases)
         print()
+
     def forwardprop(self, activation_function, X):
         activation_function = self.activation_functions[activation_function]
         self.neuron_activations = [X]
@@ -61,21 +62,23 @@ class Network:
         print(self.neuron_activations)
 
         self.gradient_descent(3, 0.5)
+
     def sigmoid_activation(self, Z):
         return 1/(1+np.exp(-Z))
 
     def sigmoid_derivative(self, z):
-        return self.sigmoid_activation(z)*(1-self.sigmoid_activation(z))
+        # return self.sigmoid_activation(z)*(1-self.sigmoid_activation(z))
+        return z*(1-z) # The self.sigmoid_activation(z) has already been applied on z during forward propagation
 
     def cost_function(self, h, y):
-        return 1
+        return sum([np.dot(y[i]-h[i], y[i]-h[i]) for i in range(len(h))])/len(h)
 
-    def cost_derivative(self, a):
-        pass
+    def cost_derivative(self, hi, yi):
+        return 2/len(hi) * np.dot((hi - yi), hi) 
 
     def gradient_descent(self, epochs, learning_parameter):
         for e in range(epochs):
-            cost = self.cost_function(1, 1)
+            cost = self.cost_function([1, 1], [1, 1])
             nabla_wb = self.backprop()
             nabla_w = nabla_wb[0]
             nabla_b = nabla_wb[1]
@@ -91,7 +94,7 @@ class Network:
 
     def backprop(self):
         nabla_a = []
-        nabla_aL = [[1] for i in range(len(self.neuron_activations[self.L-1]))] # nabla_a for the last layer, cost_function implementation needed
+        nabla_aL = [[self.cost_derivative(hi, 1)] for hi in self.neuron_activations[self.L-1].T]
 
         # Calculation of nabla_a given that we know the elements of nabla_a for the last layer
         print()
