@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 np.random.seed(5)
 
 class Network:
@@ -28,8 +29,7 @@ class Network:
         print(self.biases)
         print()
 
-    def forwardprop(self, activation_function, X):
-        activation_function = self.activation_functions[activation_function]
+    def forwardprop(self, X):
         self.neuron_activations = [X]
         self.weighted_sums = [0]
         A = X
@@ -45,7 +45,7 @@ class Network:
             Z = np.dot(W, A) + B
             print("Weighted sums for layer l")
             print(Z)
-            A = activation_function(Z)
+            A = self.activation_function(Z)
             print("Activations for layer l:")
             print(A)
             print()
@@ -61,14 +61,11 @@ class Network:
         print("Activations of all neurons: ")
         print(self.neuron_activations)
 
-        self.gradient_descent(3, 0.5)
-
     def sigmoid_activation(self, Z):
         return 1/(1+np.exp(-Z))
 
     def sigmoid_derivative(self, z):
-        # return self.sigmoid_activation(z)*(1-self.sigmoid_activation(z))
-        return z*(1-z) # The self.sigmoid_activation(z) has already been applied on z during forward propagation
+        return self.sigmoid_activation(z)*(1-self.sigmoid_activation(z))
 
     def cost_function(self, h, y):
         return sum([np.dot(y[i]-h[i], y[i]-h[i]) for i in range(len(h))])/len(h)
@@ -76,9 +73,10 @@ class Network:
     def cost_derivative(self, hi, yi):
         return 2/len(hi) * np.dot((hi - yi), hi) 
 
-    def gradient_descent(self, epochs, learning_parameter):
+    def gradient_descent(self, epochs, learning_parameter, Y_train):
         for e in range(epochs):
-            cost = self.cost_function([1, 1], [1, 1])
+            # cost = self.cost_function([1, 1], [1, 1])
+            cost = self.cost_function(self.h, Y_train)
             nabla_wb = self.backprop()
             nabla_w = nabla_wb[0]
             nabla_b = nabla_wb[1]
@@ -91,6 +89,8 @@ class Network:
         print(self.weights)
         print("Final biases: ")
         print(self.biases)
+        print("Final activations: ")
+        print(self.neuron_activations)
 
     def backprop(self):
         nabla_a = []
@@ -100,6 +100,15 @@ class Network:
         print()
         nabla_a.append(nabla_aL)
         nabla_aj = nabla_aL
+
+        print(self.neuron_activations[self.L-1])
+        print(self.neuron_activations[self.L-1].T)
+        for hi in self.neuron_activations[self.L-1].T:
+            print(hi)
+            print(self.cost_derivative(hi, 1))
+
+        print(nabla_aL)
+
         for l in range(self.L-1, 0, -1):
 
             print(l-1)
@@ -158,8 +167,48 @@ class Network:
         print(nabla_w)
 
         return nabla_w, nabla_b
+    
+    def predict(self, x):
+        pass
+    
+    def train(self, activation_function, X_train, flatten=True):
+        self.activation_function = self.activation_functions[activation_function]
+        self.h = []
+        for x in X_train:
+            if flatten:
+                x = flatten_img(x)
+            self.forwardprop(x)
+            self.h.append(self.neuron_activations[self.L-1])
+        self.gradient_descent(3, 0.5)
 
-net = Network((3, 4, 4, 1))
-net.forwardprop("sigmoid", [[3], 
-                            [2], 
-                            [5]])
+fashion_mnist = tf.keras.datasets.fashion_mnist
+(X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
+
+def flatten_img(img):
+    flattened_img = []
+    for row in img:
+        for col in row:
+            flattened_img.append([col])
+    return flattened_img
+
+def one_hot(data):
+    encoded_data = []
+    for num in data:
+        encoded_num = []
+        for i in range(max(data)+1):
+            if i == num:
+                encoded_num.append(1)
+            else:
+                encoded_num.append(0)
+        encoded_data.append(encoded_num)
+    return encoded_data
+
+X_train_flattened = X_train.reshape(X_train.shape[0], 784, 1)
+print(X_train_flattened)
+
+y_train_encoded = np.zeros((y_train.size, y_train.max()+1))
+y_train_encoded[np.arange(y_train.size), y_train] = 1
+print(y_train_encoded)
+
+# net = Network((784, 16, 16, 10))
+# net.train("sigmoid", X_train, y_train)
