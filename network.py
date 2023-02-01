@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-np.random.seed(5)
+# np.random.seed(5)
 
 class Network:
     def __init__(self, topology):
@@ -24,10 +24,10 @@ class Network:
         #                 [4]], 
         #                [[4]]]
         
-        print(self.weights)
-        print()
-        print(self.biases)
-        print()
+        # print(self.weights)
+        # print()
+        # print(self.biases)
+        # print()
 
     def forwardprop(self, X):
         self.neuron_activations = [X]
@@ -35,86 +35,110 @@ class Network:
         A = X
         for l in range(1, self.L):
             W = self.weights[l]
-            print("Weights for layer l:")
-            print(W)
+            # print("Weights for layer l:")
+            # print(W)
             B = self.biases[l]
-            print("Biases for layer l:")
-            print(B)
-            print("Activations for layer l-1:")
-            print(A)
+            # print("Biases for layer l:")
+            # print(B)
+            # print("Activations for layer l-1:")
+            # print(A)
             Z = np.dot(W, A) + B
-            print("Weighted sums for layer l")
-            print(Z)
+            # print("Weighted sums for layer l")
+            # print(Z)
             A = self.activation_function(Z)
-            print("Activations for layer l:")
-            print(A)
-            print()
+            # print("Activations for layer l:")
+            # print(A)
+            # print()
             self.neuron_activations.append(A)
             self.weighted_sums.append(Z)
-        print()
-        print("All biases:")
-        print(self.biases)
-        print("All weights:")
-        print(self.weights)
-        print("Weighted sums of all neurons:")
-        print(self.weighted_sums)
-        print("Activations of all neurons: ")
-        print(self.neuron_activations)
+        # print()
+        # print("All biases:")
+        # print(self.biases)
+        # print("All weights:")
+        # print(self.weights)
+        # print("Weighted sums of all neurons:")
+        # print(self.weighted_sums)
+        # print("Activations of all neurons: ")
+        # print(self.neuron_activations)
 
     def sigmoid_activation(self, Z):
         return 1/(1+np.exp(-Z))
 
     def sigmoid_derivative(self, z):
         return self.sigmoid_activation(z)*(1-self.sigmoid_activation(z))
+    
+    def ReLU_activation(self, Z):
+        return np.maximum(Z, 0)
+    
+    def ReLU_derivative(self, z):
+        return z > 0
+    
+    def softmax_activation(self, Z):
+        return np.exp(Z) / sum(np.exp(Z))
+    
+    def softmax_derivative(self, z):
+        return 
 
     def cost_function(self, h, y):
+        # print(h[:3])
+        # print(y[:3])
+        # for i in range(5):
+        #     print()
+        #     print(y[i])
+        #     print(h[i])
+        #     print(y[i]-h[i])
         return sum([np.dot(y[i]-h[i], y[i]-h[i]) for i in range(len(h))])/len(h)
 
     def cost_derivative(self, hi, yi):
-        return 2/len(hi) * np.dot((hi - yi), hi) 
+        return 2/len(hi) * np.dot((yi - hi), -hi) 
+        # return sum(yi-hi)
 
-    def gradient_descent(self, epochs, learning_parameter, Y_train):
-        for e in range(epochs):
+    def gradient_descent(self, epochs, learning_parameter, h, y_train):
             # cost = self.cost_function([1, 1], [1, 1])
-            cost = self.cost_function(self.h, Y_train)
-            nabla_wb = self.backprop()
-            nabla_w = nabla_wb[0]
-            nabla_b = nabla_wb[1]
+        cost = self.cost_function(h, y_train)
 
-            for l in range(1, self.L):
-                self.weights[l] -= learning_parameter * nabla_w[l]
-                self.biases[l] -= learning_parameter * nabla_b[l]
+        print(f"Cost {cost}")
+        # print(h[:3])
+        # print(y_train[:3])
+        nabla_wb = self.backprop(h, y_train)
+        nabla_w = nabla_wb[0]
+        nabla_b = nabla_wb[1]
 
-        print("Final weights: ")
-        print(self.weights)
-        print("Final biases: ")
-        print(self.biases)
-        print("Final activations: ")
-        print(self.neuron_activations)
+        for l in range(1, self.L):
+            self.weights[l] -= learning_parameter * nabla_w[l]
+            self.biases[l] -= learning_parameter * nabla_b[l]
 
-    def backprop(self):
+        # print("Final weights: ")
+        # print(self.weights)
+        # print("Final biases: ")
+        # print(self.biases)
+        # print("Final activations: ")
+        # print(self.neuron_activations)
+        
+
+    def backprop(self, h, y_train):
         nabla_a = []
-        nabla_aL = [[self.cost_derivative(hi, 1)] for hi in self.neuron_activations[self.L-1].T]
+        nabla_aL = [[self.cost_derivative(hi, yi)] for hi, yi in zip(h, y_train)]
 
         # Calculation of nabla_a given that we know the elements of nabla_a for the last layer
-        print()
+        # print()
         nabla_a.append(nabla_aL)
         nabla_aj = nabla_aL
 
-        print(self.neuron_activations[self.L-1])
-        print(self.neuron_activations[self.L-1].T)
-        for hi in self.neuron_activations[self.L-1].T:
-            print(hi)
-            print(self.cost_derivative(hi, 1))
+        # print(self.neuron_activations[self.L-1])
+        # print(self.neuron_activations[self.L-1].T)
+        # for hi in self.neuron_activations[self.L-1].T:
+            # print(hi)
+            # print(self.cost_derivative(hi, 1))
 
-        print(nabla_aL)
+        # print(nabla_aL)
 
         for l in range(self.L-1, 0, -1):
 
-            print(l-1)
-            print(self.neuron_activations[l-1])
-            print(l)
-            print(self.neuron_activations[l])
+            # print(l-1)
+            # print(self.neuron_activations[l-1])
+            # print(l)
+            # print(self.neuron_activations[l])
 
             nabla_ak = [] # nabla_a for layer l-1
             for k in range(len(self.neuron_activations[l-1])):   
@@ -126,26 +150,26 @@ class Network:
                     pdC_pdaj = nabla_aj[j][0]
                     pdC_pdak += wjk*self.sigmoid_derivative(zj)*pdC_pdaj
 
-                    print(f"k: {k}")
-                    print(self.neuron_activations[l-1][k])
-                    print(f"j: {j}")
-                    print(self.neuron_activations[l][j])
-                    print(f"zj: {zj}")
-                    print(f"wjk: {wjk}")
+                    # print(f"k: {k}")
+                    # print(self.neuron_activations[l-1][k])
+                    # print(f"j: {j}")
+                    # print(self.neuron_activations[l][j])
+                    # print(f"zj: {zj}")
+                    # print(f"wjk: {wjk}")
 
                 nabla_ak.append([pdC_pdak])
             
-            print()
-            print(nabla_aj)
-            print(nabla_ak)
+            # print()
+            # print(nabla_aj)
+            # print(nabla_ak)
 
             nabla_a.append(nabla_ak)
             nabla_aj = nabla_ak # nabla_a for layer l
         nabla_a.reverse()
 
-        print()
-        print("nabla_a:")
-        print(nabla_a)
+        # print()
+        # print("nabla_a:")
+        # print(nabla_a)
 
         nabla_b, nabla_w, nabla_bj, nabla_wj = [None], [None], [], []
         for l in range(1, self.L):
@@ -161,28 +185,39 @@ class Network:
             nabla_b.append(np.array(nabla_bj))
             nabla_w.append(np.array(nabla_wj))
 
-        print("nabla_b:")
-        print(nabla_b)
-        print("nabla_w:")
-        print(nabla_w)
+        # print("nabla_b:")
+        # print(nabla_b)
+        # print("nabla_w:")
+        # print(nabla_w)
 
         return nabla_w, nabla_b
     
     def predict(self, x):
         pass
     
-    def train(self, activation_function, X_train, flatten=True):
+    def train(self, activation_function, X_train, y_train, epochs, learning_rate, flatten=False):
         self.activation_function = self.activation_functions[activation_function]
-        self.h = []
-        for x in X_train:
-            if flatten:
-                x = flatten_img(x)
-            self.forwardprop(x)
-            self.h.append(self.neuron_activations[self.L-1])
-        self.gradient_descent(3, 0.5)
-
-fashion_mnist = tf.keras.datasets.fashion_mnist
-(X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
+        for e in range(epochs):
+            h = []
+            print(f"Epoch {e}")
+            for x in X_train:
+                if flatten:
+                    x = flatten_img(x)
+                self.forwardprop(x)
+                h.append(self.neuron_activations[self.L-1].T[0])
+            h = np.array(h)
+            self.gradient_descent(epochs, learning_rate, h, y_train)
+            predictions = h.argmax(axis=1)
+            # print(predictions[:3])
+            targets = y_train.argmax(axis=1)
+            # print(targets[:3])
+            right = 0
+            for i in range(len(h)):
+                if predictions[i] == targets[i]:
+                    right += 1
+            print(right)
+            accuracy = right/len(h)
+            print(accuracy)
 
 def flatten_img(img):
     flattened_img = []
@@ -203,12 +238,19 @@ def one_hot(data):
         encoded_data.append(encoded_num)
     return encoded_data
 
-X_train_flattened = X_train.reshape(X_train.shape[0], 784, 1)
+# fashion_mnist = tf.keras.datasets.fashion_mnist
+# (X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
+mnist = tf.keras.datasets.mnist
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+X_train_normalized = X_train / 255
+X_train_flattened = X_train_normalized.reshape(X_train_normalized.shape[0], 784, 1)
 print(X_train_flattened)
 
 y_train_encoded = np.zeros((y_train.size, y_train.max()+1))
 y_train_encoded[np.arange(y_train.size), y_train] = 1
+# y_train_encoded = y_train_encoded.reshape(y_train.shape[0], 10, 1)
 print(y_train_encoded)
 
-# net = Network((784, 16, 16, 10))
-# net.train("sigmoid", X_train, y_train)
+net = Network((784, 30, 10, 1))
+net.train("sigmoid", X_train_flattened, y_train_encoded, 500, 3)

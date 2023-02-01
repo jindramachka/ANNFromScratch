@@ -63,3 +63,8 @@ for i in range(len(h_for_diff)):
     nabla_h.append(pdC_pdhi)
 print(nabla_h)
 
+a = [1,2,3,4]
+b=  [5,6,7,8]
+print(np.dot(a, b))
+
+print(h.argmax(axis=1))
