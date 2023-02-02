@@ -68,3 +68,50 @@ b=  [5,6,7,8]
 print(np.dot(a, b))
 
 print(h.argmax(axis=1))
+
+# softmax
+a = np.array([[6], [8], [8], [1], [4], [4], [6]])
+print(np.exp(a) / sum(np.exp(a)))
+def softmax(z):
+    return np.exp(a) / sum(np.exp(a))
+# derivative
+s = softmax(a).reshape(-1,1)
+print(np.diagflat(s) - np.dot(s, s.T))
+
+# sigmoid test
+print()
+def sigmoid_activation(Z):
+    return 1/(1+np.exp(-Z))
+def sigmoid_derivative(z):
+    return sigmoid_activation(z)*(1-sigmoid_activation(z))
+print(sigmoid_activation(a))
+print(sigmoid_derivative(a[0]))
+
+def sigmoid_activation(Z):
+    return 1/(1+np.exp(-Z))
+
+def sigmoid_derivative(z):
+    return sigmoid_activation(z)*(1-sigmoid_activation(z))
+
+def ReLU_activation(Z):
+    return np.maximum(Z, 0)
+
+def ReLU_derivative(z):
+    return z > 0
+
+def softmax_activation(Z):
+    return np.exp(Z) / sum(np.exp(Z))
+
+def softmax_derivative(z):
+    s = softmax_activation(z).reshape(-1,1)
+    return np.diagflat(s) - np.dot(s, s.T)
+
+activation_functions = {"sigmoid": (sigmoid_activation,
+                                                 sigmoid_derivative),
+                        "relu": (ReLU_activation,
+                                ReLU_derivative),
+                        "softmax": (softmax_activation,
+                                    softmax_derivative)}
+print()
+print(a)
+print(activation_functions["softmax"][1]([23]))
