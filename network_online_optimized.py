@@ -99,14 +99,11 @@ class Network:
         # return 2/len(hi) * np.dot((yi - hi), -hi) 
         return hi-yi
 
-    def gradient_descent(self, epochs, learning_parameter, h, y_train):
-        cost = self.cost_function(h, y_train)
-
-        print(f"Cost {cost}")
+    def gradient_descent(self, epochs, learning_parameter, h, y):
             # cost = self.cost_function([1, 1], [1, 1])
         # print(h[:3])
         # print(y_train[:3])
-        nabla_wb = self.backprop(h, y_train)
+        nabla_wb = self.backprop(h, y)
         nabla_w = nabla_wb[0]
         nabla_b = nabla_wb[1]
 
@@ -122,9 +119,10 @@ class Network:
         # print(self.neuron_activations)
         
 
-    def backprop(self, h, y_train):
+    def backprop(self, h, y):
+        # print("now")
         nabla_a = []
-        nabla_aL = [[self.cost_derivative(hi, yi)] for hi, yi in zip(h, y_train)]
+        nabla_aL = np.array([[self.cost_derivative(hi, yi)] for hi, yi in zip(h, y)])
 
         # Calculation of nabla_a given that we know the elements of nabla_a for the last layer
         # print()
@@ -140,57 +138,27 @@ class Network:
         # print(nabla_aL)
 
         for l in range(self.L-1, 0, -1):
-
-            # print(l-1)
-            # print(self.neuron_activations[l-1])
-            # print(l)
-            # print(self.neuron_activations[l])
-
-            activation_derivative = self.activation_functions[l][1]
-            nabla_ak = [] # nabla_a for layer l-1
-            for k in range(len(self.neuron_activations[l-1])):   
-                # print(f"k: {k}")
-                pdC_pdak = 0
-                for j in range(len(self.neuron_activations[l])):
-                    zj = self.weighted_sums[l][j][0]
-                    wjk = self.weights[l][j][k]
-                    pdC_pdaj = nabla_aj[j][0]
-                    pdC_pdak += wjk*activation_derivative(zj)*pdC_pdaj
-
-                    # print(f"k: {k}")
-                    # print(self.neuron_activations[l-1][k])
-                    # print(f"j: {j}")
-                    # print(self.neuron_activations[l][j])
-                    # print(f"zj: {zj}")
-                    # print(f"wjk: {wjk}")
-
-                nabla_ak.append([pdC_pdak])
-            
-            # print()
-            # print(nabla_aj)
-            # print(nabla_ak)
-
+            nabla_ak = []
+            Z = self.weighted_sums[l]
+            W = self.weights[l]
+            nabla_ak = np.dot(W.T, self.sigmoid_derivative(Z) * nabla_aj)
             nabla_a.append(nabla_ak)
-            nabla_aj = nabla_ak # nabla_a for layer l
-        nabla_a.reverse()
-
+            nabla_aj = nabla_ak
         # print()
         # print("nabla_a:")
         # print(nabla_a)
+        nabla_a.reverse()
 
         nabla_b, nabla_w, nabla_bj, nabla_wj = [None], [None], [], []
         for l in range(1, self.L):
-            nabla_bj = []
-            nabla_wj = []
-            for j in (range(len(self.neuron_activations[l]))):
-                aj = self.neuron_activations[l][j][0]
-                zj = self.weighted_sums[l][j][0]
-                pdC_pdbj = self.sigmoid_derivative(zj)*nabla_a[l][j][0]
-                pdC_pdwjk = aj*pdC_pdbj
-                nabla_bj.append([pdC_pdbj])
-                nabla_wj.append([pdC_pdwjk for k in range(len(self.weights[l][j]))])
-            nabla_b.append(np.array(nabla_bj))
-            nabla_w.append(np.array(nabla_wj))
+            A = self.neuron_activations[l]
+            Z = self.weighted_sums[l]
+            W = self.weights[l]
+            nabla_bj = self.sigmoid_derivative(Z)*nabla_a[l]
+            nabla_wj = A*nabla_bj
+            nabla_b.append(nabla_bj)
+            nabla_w.append(nabla_wj)
+
 
         # print("nabla_b:")
         # print(nabla_b)
@@ -205,25 +173,39 @@ class Network:
     def train(self, activation_functions, X_train, y_train, epochs, learning_rate, flatten=False):
         self.activation_functions = [None if func == None else self.activation_functions[func] for func in activation_functions]
         for e in range(epochs):
-            h = []
+            h = None
+            hs = []
             print(f"Epoch {e}")
-            for x in X_train:
+            i=0
+            for x, y in zip(X_train, y_train):
+                i+=1
+                if i % 10000 == 0:
+                    print(i)
                 if flatten:
                     x = flatten_img(x)
                 self.forwardprop(x)
-                h.append(self.neuron_activations[self.L-1].T[0])
-            h = np.array(h)
-            self.gradient_descent(epochs, learning_rate, h, y_train)
-            predictions = h.argmax(axis=1)
+
+                h = self.neuron_activations[self.L-1].T[0]
+                hs.append(h)
+                self.gradient_descent(epochs, learning_rate, h, y)
+
+                # h.append(self.neuron_activations[self.L-1].T[0])
+            # h = np.array(h)
+            # self.gradient_descent(epochs, learning_rate, h, y_train)
+            hs = np.array(hs)
+            cost = self.cost_function(hs, y_train)
+            print(f"Cost {cost}")
+            # print(hs[:3])
+            predictions = hs.argmax(axis=1)
             # print(predictions[:3])
             targets = y_train.argmax(axis=1)
             # print(targets[:3])
             right = 0
-            for i in range(len(h)):
+            for i in range(len(hs)):
                 if predictions[i] == targets[i]:
                     right += 1
             print(right)
-            accuracy = right/len(h)
+            accuracy = right/len(hs)
             print(accuracy)
 
 def flatten_img(img):
