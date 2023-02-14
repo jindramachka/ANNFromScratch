@@ -19,43 +19,6 @@ class Network:
             self.biases.append(np.random.randn(self.topology[l], 1))
             self.weights.append(np.random.randn(self.topology[l], self.topology[l-1]))
 
-    def stochastic_gradient_descent(self, activation_functions, X_train, y_train, epochs, mini_batch_size, learning_rate):
-
-        self.activation_functions = [None if func == None else self.activation_functions[func] for func in activation_functions]
-
-        for e in range(epochs):
-            training_data = list(zip(X_train, y_train))
-            shuffle(training_data)
-            h = None
-    
-            mini_batches = []
-            for mb in range(0, len(training_data), mini_batch_size):
-                mini_batches.append(training_data[mb:mb+mini_batch_size])
-
-            for mini_batch in mini_batches:
-                for x, y in mini_batch:
-                    self.forward_propagation(x)
-                    h = self.neuron_activations[self.L-1].T[0]
-                    nabla_wb_x = self.backward_propagation(h, y)
-                    nabla_w_x = nabla_wb_x[0]
-                    nabla_b_x = nabla_wb_x[1]
-
-                    for l in range(1, self.L):
-                        self.weights[l] -= learning_rate * nabla_w_x[l]/len(mini_batch)
-                        self.biases[l] -= learning_rate * nabla_b_x[l]/len(mini_batch)
-
-            hs = []
-            for x, y in zip(X_train, y_train):
-                self.forward_propagation(x)
-                h = self.neuron_activations[self.L-1].T[0]
-                hs.append(h)
-            predictions = np.array(hs).argmax(axis=1)
-            target_values = y_train.argmax(axis=1)
-            accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
-            cost = self.cost_function(hs, y_train)
-
-            print(f"Epoch {e} -> Cost: {cost}, Accuracy: {accuracy}")
-            
     def forward_propagation(self, x):
         self.neuron_activations = [x]
         self.weighted_sums = [None]
@@ -72,6 +35,44 @@ class Network:
 
             self.neuron_activations.append(current_layer_A)
             self.weighted_sums.append(current_layer_Z)
+
+    def stochastic_gradient_descent(self, activation_functions, X_train, y_train, epochs, mini_batch_size, learning_rate):
+
+        self.activation_functions = [None if func == None else self.activation_functions[func] for func in activation_functions]
+
+        for e in range(epochs):
+            training_data = list(zip(X_train, y_train))
+            shuffle(training_data)
+            h = None
+    
+            mini_batches = []
+            for mb in range(0, len(training_data), mini_batch_size):
+                mini_batches.append(training_data[mb:mb+mini_batch_size])
+
+
+            for mini_batch in mini_batches:
+                for x, y in mini_batch:
+                    self.forward_propagation(x)
+                    h = self.neuron_activations[self.L-1].T[0]
+                    nabla_wb_x = self.backward_propagation(h, y)
+                    nabla_w_x = nabla_wb_x[0]
+                    nabla_b_x = nabla_wb_x[1]
+
+                    for l in range(1, self.L):
+                        self.weights[l] -= learning_rate * nabla_w_x[l]/len(mini_batch)
+                        self.biases[l] -= learning_rate * nabla_b_x[l]/len(mini_batch)
+
+            hs = []
+            for x in X_train:
+                self.forward_propagation(x)
+                h = self.neuron_activations[self.L-1].T[0]
+                hs.append(h)
+            predictions = np.array(hs).argmax(axis=1)
+            target_values = y_train.argmax(axis=1)
+            accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
+            cost = self.cost_function(hs, y_train)
+
+            print(f"Epoch {e} -> Cost: {cost}, Accuracy: {accuracy}")
 
     def backward_propagation(self, h, y):
         nabla_a = []
@@ -103,8 +104,16 @@ class Network:
     def predict(self):
         pass
     
-    def evaluate(self):
-        pass
+    def evaluate(self, X_test, y_test):
+        hs = []
+        for x in X_test:
+            self.forward_propagation(x)
+            h = self.neuron_activations[self.L-1].T[0]
+            hs.append(h)
+        predictions = np.array(hs).argmax(axis=1)
+        target_values = y_test.argmax(axis=1)
+        accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
+        print(f"Test accuracy: {accuracy}")
 
     def sigmoid_activation(self, Z):
         return 1/(1+np.exp(-Z))
@@ -167,4 +176,5 @@ y_test_encoded = np.zeros((y_test.size, y_test.max()+1))
 y_test_encoded[np.arange(y_test.size), y_test] = 1
 
 net = Network((784, 16, 16, 10))
-net.stochastic_gradient_descent((None, "sigmoid", "sigmoid", "sigmoid"), X_train_flattened, y_train_encoded, 30, 10, 0.5)
+net.stochastic_gradient_descent((None, "sigmoid", "sigmoid", "sigmoid"), X_train_flattened, y_train_encoded, 5, 10, 0.5)
+net.evaluate(X_test_flattened, y_test_encoded)
