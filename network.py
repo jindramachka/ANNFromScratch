@@ -40,7 +40,7 @@ class Network:
 
         self.activation_functions = [None if func == None else self.activation_functions[func] for func in activation_functions]
 
-        self.history = {"training_loss": [], "training_accuracy": []}
+        self.history = {"loss": [], "accuracy": [], "val_accuracy": [], "val_loss": []} if validation_data else {"loss": [], "accuracy": []}
 
         for e in range(epochs):
             training_data = list(zip(X_train, y_train))
@@ -74,13 +74,12 @@ class Network:
             training_accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
             training_loss = self.loss_function(hs, y_train)
 
-            self.history["training loss"].append(training_loss)
-            self.history["training accuracy"].append(training_accuracy)
+            self.history["loss"].append(training_loss)
+            self.history["accuracy"].append(training_accuracy)
 
             if validation_data:
                 X_val = validation_data[0]
                 y_val = validation_data[1]
-                self.history["validation loss"], self.history["validation accuracy"] = [], []
                 hs = []
                 for x in X_val:
                     self.forward_propagation(x)
@@ -91,8 +90,8 @@ class Network:
                 validation_accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
                 validation_loss = self.loss_function(hs, y_val)
 
-                self.history["validation loss"].append(validation_loss)
-                self.history["validation accuracy"].append(validation_accuracy)
+                self.history["val_loss"].append(validation_loss)
+                self.history["val_accuracy"].append(validation_accuracy)
                 print(f"Epoch {e} -> Training loss: {training_loss}, Training accuracy: {training_accuracy}, Validation loss: {validation_loss}, Validation accuracy: {validation_accuracy}")
             else:
                 print(f"Epoch {e} -> Loss: {training_loss}, Accuracy: {training_accuracy}")
