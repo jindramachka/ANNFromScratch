@@ -36,9 +36,11 @@ class Network:
             self.neuron_activations.append(current_layer_A)
             self.weighted_sums.append(current_layer_Z)
 
-    def stochastic_gradient_descent(self, activation_functions, X_train, y_train, epochs, mini_batch_size, learning_rate):
+    def stochastic_gradient_descent(self, activation_functions, X_train, y_train, epochs, mini_batch_size, learning_rate, validation_data = None):
 
         self.activation_functions = [None if func == None else self.activation_functions[func] for func in activation_functions]
+
+        self.history = {"training_loss": [], "training_accuracy": []}
 
         for e in range(epochs):
             training_data = list(zip(X_train, y_train))
@@ -69,14 +71,36 @@ class Network:
                 hs.append(h)
             predictions = np.array(hs).argmax(axis=1)
             target_values = y_train.argmax(axis=1)
-            accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
-            cost = self.cost_function(hs, y_train)
+            training_accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
+            training_loss = self.loss_function(hs, y_train)
 
-            print(f"Epoch {e} -> Cost: {cost}, Accuracy: {accuracy}")
+            self.history["training loss"].append(training_loss)
+            self.history["training accuracy"].append(training_accuracy)
+
+            if validation_data:
+                X_val = validation_data[0]
+                y_val = validation_data[1]
+                self.history["validation loss"], self.history["validation accuracy"] = [], []
+                hs = []
+                for x in X_val:
+                    self.forward_propagation(x)
+                    h = self.neuron_activations[self.L-1].T[0]
+                    hs.append(h)
+                predictions = np.array(hs).argmax(axis=1)
+                target_values = y_val.argmax(axis=1)
+                validation_accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
+                validation_loss = self.loss_function(hs, y_val)
+
+                self.history["validation loss"].append(validation_loss)
+                self.history["validation accuracy"].append(validation_accuracy)
+                print(f"Epoch {e} -> Training loss: {training_loss}, Training accuracy: {training_accuracy}, Validation loss: {validation_loss}, Validation accuracy: {validation_accuracy}")
+            else:
+                print(f"Epoch {e} -> Loss: {training_loss}, Accuracy: {training_accuracy}")
+            
 
     def backward_propagation(self, h, y):
         nabla_a = []
-        last_layer_nabla_a = np.array([[self.cost_derivative(hi, yi)] for hi, yi in zip(h, y)])
+        last_layer_nabla_a = np.array([[self.loss_derivative(hi, yi)] for hi, yi in zip(h, y)])
 
         nabla_a.append(last_layer_nabla_a)
         current_layer_nabla_a = last_layer_nabla_a
@@ -112,8 +136,9 @@ class Network:
             hs.append(h)
         predictions = np.array(hs).argmax(axis=1)
         target_values = y_test.argmax(axis=1)
-        accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
-        print(f"Test accuracy: {accuracy}")
+        test_loss = self.loss_function(hs, y_test)
+        test_accuracy = sum([1 for i in range(len(hs)) if predictions[i] == target_values[i]])/len(hs)
+        print(f"Test loss: {test_loss}, Test accuracy: {test_accuracy}")
 
     def sigmoid_activation(self, Z):
         return 1/(1+np.exp(-Z))
@@ -133,48 +158,8 @@ class Network:
     def softmax_derivative(self, z):
         return
 
-    def cost_function(self, h, y):
+    def loss_function(self, h, y):
         return sum([np.dot(y[i]-h[i], y[i]-h[i]) for i in range(len(h))])/len(h)
 
-    def cost_derivative(self, hi, yi):
+    def loss_derivative(self, hi, yi):
         return 2*(hi-yi)
-
-# def flatten_img(img):
-#     """Flattens one image"""
-#     flattened_img = []
-#     for row in img:
-#         for col in row:
-#             flattened_img.append([col])
-#     return flattened_img
-
-# def one_hot(data):
-#     encoded_data = []
-#     for num in data:
-#         encoded_num = []
-#         for i in range(max(data)+1):
-#             if i == num:
-#                 encoded_num.append(1)
-#             else:
-#                 encoded_num.append(0)
-#         encoded_data.append(encoded_num)
-#     return encoded_data
-
-fashion_mnist = tf.keras.datasets.fashion_mnist
-(X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
-# mnist = tf.keras.datasets.mnist
-# (X_train, y_train), (X_test, y_test) = mnist.load_data()
-
-X_train_normalized = X_train / 255
-X_train_flattened = X_train_normalized.reshape(X_train_normalized.shape[0], 784, 1)
-X_test_normalized = X_test / 255
-X_test_flattened = X_test_normalized.reshape(X_test_normalized.shape[0], 784, 1)
-
-y_train_encoded = np.zeros((y_train.size, y_train.max()+1))
-y_train_encoded[np.arange(y_train.size), y_train] = 1
-# y_train_encoded = y_train_encoded.reshape(y_train.shape[0], 10, 1)
-y_test_encoded = np.zeros((y_test.size, y_test.max()+1))
-y_test_encoded[np.arange(y_test.size), y_test] = 1
-
-net = Network((784, 16, 16, 10))
-net.stochastic_gradient_descent((None, "sigmoid", "sigmoid", "sigmoid"), X_train_flattened, y_train_encoded, 5, 10, 0.5)
-net.evaluate(X_test_flattened, y_test_encoded)
